@@ -35,6 +35,7 @@ func TestParse(t *testing.T) {
 		{"P3Y6M4DT12H30M5S", nil, (3*365*24*time.Hour + 6*30*24*time.Hour + 4*24*time.Hour + 12*time.Hour + 30*time.Minute + 5*time.Second).Seconds(), "P3Y6M4DT12H30M5S"},
 		{"PT2H1,5M", nil, 7200 + 90, "PT2H1M30S"},
 		{"PT1M1.23456S", nil, 61.23456, "PT1M1.23456S"},
+		{"PT2.5S", nil, 2.5, "PT2.5S"},
 	}
 
 	for _, e := range tt {
@@ -42,10 +43,10 @@ func TestParse(t *testing.T) {
 		out, err := Parse(e.in)
 
 		if err != nil || e.err != nil {
-			assert.Equal(e.err, err)
+			assert.Equal(e.err, err, e.in)
 		} else {
-			assert.Equal(e.out, out.Seconds())
-			assert.Equal(e.reverse, out.String())
+			assert.Equal(e.out, out.Seconds(), e.in)
+			assert.Equal(e.reverse, out.String(), e.in)
 		}
 
 	}

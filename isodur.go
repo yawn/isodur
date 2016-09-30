@@ -141,98 +141,41 @@ func Parse(str string) (*Duration, error) {
 // String formats the duration to ISO 8601.
 func (_d *Duration) String() string {
 
-	const base = 10
-
 	var (
-		buf     = bytes.NewBufferString(p)
-		days    int64
-		dur     = int64(_d.Duration)
-		hours   int64
-		minutes int64
-		months  int64
-		seconds float64
-		weeks   int64
-		years   int64
+		buf      = bytes.NewBufferString(p)
+		dur      = int64(_d.Duration)
+		slots    = make([]float64, 7)
+		timeMode = false
+		tokens   = []string{y, m, w, d, h, m, s}
+		windows  = []time.Duration{year, month, week, day, hour, minute, second}
 	)
 
-	// TODO: cleanup
+	for i := range slots {
 
-	if dur >= int64(year) {
+		n := float64(windows[i])
+		d := int64(n)
 
-		years = dur / int64(year)
-		dur = dur - (years * int64(year))
+		if dur >= d {
 
-		buf.WriteString(strconv.FormatInt(years, base))
-		buf.WriteString(y)
+			var units float64
 
-	}
+			if i < 6 { // try to avoid fractionals
+				units = float64(dur / d)
+				dur = dur - (int64(units) * d)
+			} else {
+				units = float64(dur) / n
+				dur = int64(float64(dur) - units*n)
+			}
 
-	if dur >= int64(month) {
+			if i > 3 && !timeMode && units > 0 {
+				timeMode = true
+				buf.WriteString(t)
+			}
 
-		months = dur / int64(month)
-		dur = dur - (months * int64(month))
+			buf.WriteString(strconv.FormatFloat(float64(units), 'f', -1, 64))
+			buf.WriteString(tokens[i])
 
-		buf.WriteString(strconv.FormatInt(months, base))
-		buf.WriteString(m)
-
-	}
-
-	if dur >= int64(week) {
-
-		weeks = dur / int64(week)
-		dur = dur - (weeks * int64(week))
-
-		buf.WriteString(strconv.FormatInt(weeks, base))
-		buf.WriteString(w)
-
-	}
-
-	if dur >= int64(day) {
-
-		days = dur / int64(day)
-		dur = dur - (days * int64(day))
-
-		buf.WriteString(strconv.FormatInt(days, base))
-		buf.WriteString(d)
-
-	}
-
-	if dur >= int64(hour) {
-
-		hours = dur / int64(hour)
-		dur = dur - (hours * int64(hour))
-
-		buf.WriteString(t)
-
-		buf.WriteString(strconv.FormatInt(hours, base))
-		buf.WriteString(h)
-
-	}
-
-	if dur >= int64(minute) {
-
-		minutes = dur / int64(minute)
-		dur = dur - (minutes * int64(minute))
-
-		if hours == 0 {
-			buf.WriteString(t)
 		}
-
-		buf.WriteString(strconv.FormatInt(minutes, base))
-		buf.WriteString(m)
-
-	}
-
-	seconds = float64(dur) / float64(second)
-
-	if seconds > 0 {
-
-		if hours == 0 && minutes == 0 {
-			buf.WriteString(t)
-		}
-
-		buf.WriteString(strconv.FormatFloat(seconds, 'f', -1, 64))
-		buf.WriteString(s)
 
 	}
 
